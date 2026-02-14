@@ -32,6 +32,7 @@ struct Edge{
 
 map<Node,int>nodeToID;
 vector<Node>idToNode;
+map<int,string>idToStationName;
 
 
 
@@ -104,32 +105,19 @@ double getCost(double distance,int mode){
 
 
 
-vector<int> dijkstra(int startNode, int endNode){
+pair<vector<int>,double> dijkstra(int startNode, int endNode){
 
     int n = graph.size();
-
-    
-    
     vector<double>minCost(n,INF);
     minCost[startNode]=0.0;
     vector<int>parent(n,-1);
 
 
 
-    //priority_queue<1,2,3>
-    //1 = what the queue is storing (pair in this case),
-    //    pairs are sorted by the first element
-    //2 = container, using vector to hold the pairs in memory
-    //3 = comperator, by default its max heap
-    //    using greater<> reverses the behaviour
-
 
 
     priority_queue<pair<double,int>,vector<pair<double,int>>,greater<pair<double,int>>> pq;
-
-    
     pq.push({0.0, startNode});
-
 
     while(!pq.empty()){
         
@@ -159,8 +147,8 @@ vector<int> dijkstra(int startNode, int endNode){
             double edgeCost = getCost(edgeToNeighbor,mode);
     
 
-            if(minCost[id] + edgeToNeighbor < minCost[neighborID]){
-                minCost[neighborID]=minCost[id]+edgeToNeighbor;
+            if(minCost[id] + edgeCost < minCost[neighborID]){
+                minCost[neighborID]=minCost[id]+edgeCost;
                 parent[neighborID]=id;
                 pq.push({minCost[neighborID],neighborID});
             }
@@ -173,7 +161,7 @@ vector<int> dijkstra(int startNode, int endNode){
 
     vector<int>path;
     if(minCost[endNode] == INF){
-        return path;
+        return {path,INF};
     }
 
     for(int curr=endNode;curr!=-1;curr=parent[curr]){
@@ -181,7 +169,7 @@ vector<int> dijkstra(int startNode, int endNode){
     }
 
     reverse(path.begin(),path.end());
-    return path;
+    return {path,minCost[endNode]};
 }
 
 
@@ -240,8 +228,8 @@ void load_roadmap(string filename){
             int vID = getID(v);
             double w = haversine(u,v);
 
-            graph[uID].push_back({vID,w});
-            graph[vID].push_back({uID,w});
+            graph[uID].push_back({vID,w,1});
+            graph[vID].push_back({uID,w,1});
 
             
         }
@@ -250,6 +238,94 @@ void load_roadmap(string filename){
 }
 
 
+
+
+
+void loadTransit(string filename, int modeID){
+
+
+    ifstream file(filename);
+    if(!file.is_open()){
+        cerr<<"could not open file lol "<<filename<<endl;
+        exit(1);
+    }
+
+   
+    string line;
+    while(getline(file,line)){
+
+        if(line.empty()){
+            continue;
+        }
+
+
+        stringstream ss(line);
+        string token;
+        vector<string>tokens;
+
+
+
+        
+        
+        
+        
+        
+        while(getline(ss,token,',')){
+            tokens.push_back(token);
+        }
+        if(tokens.size() < 5){
+            continue;
+        }
+        string startStationName = tokens[tokens.size() - 2];
+        string endStationName = tokens[tokens.size() - 1];
+        vector<Node>roadPoints;
+        for(int i=1;i<tokens.size()-2;i+=2){
+            double lon = stod(tokens[i]);
+            double lat = stod(tokens[i+1]);
+            roadPoints.push_back({lon,lat});
+        }
+
+        if (roadPoints.empty()){
+            continue;
+        }
+        //the first co-ordinate of each line is the
+            //location of the source metro
+        //the last co-ordinate of the roadPoints vector is the
+            //location of the destination metro
+        int firstNodeID = getID(roadPoints.front());
+        int lastNodeID = getID(roadPoints.back());
+        idToStationName[firstNodeID]=startStationName;
+        idToStationName[lastNodeID]=endStationName;
+      
+      
+
+
+
+
+
+
+
+
+        for(int k=0; k<roadPoints.size()-1; k++){
+            Node u = roadPoints[k];
+            Node v = roadPoints[k+1];
+
+            int uID = getID(u);
+            int vID = getID(v);
+            double w = haversine(u,v);
+
+            graph[uID].push_back({vID,w,modeID});
+            graph[vID].push_back({uID,w,modeID});
+        }
+    
+    
+    
+    
+    }
+
+
+
+}
 
 
 
@@ -284,6 +360,12 @@ int getNearestNodeID(Node target){
 int main(){
 
     load_roadmap("Roadmap-Dhaka.csv");
+    loadTransit("Routemap-DhakaMetroRail.csv", 2); 
+    // loadTransit("Routemap-BikolpoBus.csv", 3);     
+    // loadTransit("Routemap-UttaraBus.csv", 4);       
+   
+   
+    
     cout<<"Total distinct intersections: "<<idToNode.size()<<endl;
 
 
@@ -303,8 +385,9 @@ int main(){
 
 
     vector<int> shortestPath;
-    shortestPath = dijkstra(startID, endID);
-
+    pair<vector<int>,double> result = dijkstra(startID, endID);
+    shortestPath = result.first;
+    double totalCost = result.second;
 
 
 
@@ -314,7 +397,8 @@ int main(){
     else{
 
 
-        cout << "Shortest path found with " << shortestPath.size() << " steps." << endl;
+        cout << "Cheaptes path found with " << shortestPath.size() << " steps." << endl;
+        cout<<"Total Cost : "<<endl<<fixed<<setprecision(2)<<totalCost<<endl;
         cout << "Coordinates for KML:" << endl;
         cout << fixed << setprecision(6) << source.lon << "," << source.lat << ",0" << endl;
         
