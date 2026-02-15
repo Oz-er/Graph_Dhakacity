@@ -332,71 +332,21 @@ int getNearestNodeID(Node target){
 
 
 
-int main(){
 
-    int routes=0;
-    load_roadmap("Roadmap-Dhaka.csv");
-    loadTransit("Routemap-DhakaMetroRail.csv", 2); 
-    loadTransit("Routemap-BikolpoBus.csv", 3);     
-    loadTransit("Routemap-UttaraBus.csv", 4);       
-   
-   
+string formatNode(int id){
+    stringstream ss; 
+    ss << fixed << setprecision(6); 
     
-    cout<<"Total distinct intersections: "<<idToNode.size()<<endl;
-
-
-
-
-    Node source,destination;
-    cin>>source.lon>>source.lat;
-    cin>>destination.lon>>destination.lat;
-
-
-    int startID = getNearestNodeID(source);
-    int endID = getNearestNodeID(destination);
-
-  
-    double walkToStart = haversine(source,idToNode[startID]);
-    double walkFromEnd = haversine(idToNode[endID],destination);
-
-
-    vector<int> shortestPath;
-    pair<vector<int>,double> result = dijkstra(startID, endID);
-    shortestPath = result.first;
-    double totalCost = result.second;
-
-
-
-    if(shortestPath.empty()){
-        cout << "No path found between these two points " << endl;
-    } 
-    else{
-
-
-        cout << "Cheaptes path found with " << shortestPath.size() << " steps." << endl;
-        cout<<"Total Cost : "<<endl<<fixed<<setprecision(2)<<totalCost<<endl;
-        cout << "Coordinates for KML:" << endl;
-        cout << fixed << setprecision(6) << source.lon << "," << source.lat << ",0" << endl;
-        
-
-
-
-
-        //car route
-        for (int id : shortestPath) {
-            Node p = idToNode[id];
-            cout<<fixed<<setprecision(6)<<p.lon<<","<<p.lat <<",0"<<endl;
-            routes++;
-        }
-        cout<<routes<<endl;
-
-        //exact end point (Walking)
-        cout<<fixed<<setprecision(6)<<destination.lon<<","<< destination.lat << ",0" << endl;
-        cout<<"Walking to destination: " <<walkFromEnd<<" km"<<endl;
+    if(idToStationName.count(id)){ 
+        ss << idToStationName[id] << " ";
     }
-
-    return 0;
+    
+    ss << "(" << idToNode[id].lon << ", " << idToNode[id].lat << ")";
+    
+    return ss.str(); 
 }
+
+
 
 
 int main(){
@@ -427,18 +377,15 @@ int main(){
     cout << "Source: (" << fixed << setprecision(6) << source.lon << ", " << source.lat << ")\n";
     cout << "Destination: (" << fixed << setprecision(6) << destination.lon << ", " << destination.lat << ")\n\n";
 
-    double totalDistance = 0.0;
+    double totalTripDistance = 0.0;
     double calculatedTotalCost = 0.0;
 
-    // 1. Print Walk to Start
     if (walkToStart > 1e-6) {
-        string startName = idToStationName.count(startID) ? idToStationName[startID] : "(" + to_string(idToNode[startID].lon) + ", " + to_string(idToNode[startID].lat) + ")";
-        cout << "Walk from Source to " << startName << ", Distance: " 
-             << fixed << setprecision(3) << walkToStart << " km\n";
-        totalDistance += walkToStart;
+        cout << "Cost: ৳0.00: Walk from Source (" << fixed << setprecision(6) << source.lon << ", " << source.lat 
+             << ") to " << formatNode(startID) << ".\n";
+        totalTripDistance += walkToStart;
     }
 
-    // 2. Group the Path by Vehicle Mode
     int currentMode = -1;
     int segmentStartID = shortestPath[0];
     double segmentDistance = 0.0;
@@ -452,7 +399,6 @@ int main(){
         int edgeMode = 1;
         double minEdgeCost = INF;
 
-        // Find the cheapest edge connecting u and v
         for (auto edge : graph[u]) {
             if (edge.to == v) {
                 double eCost = getCost(edge.dist, edge.mode);
@@ -464,10 +410,8 @@ int main(){
             }
         }
 
-        // Initialize the first mode
         if (currentMode == -1) currentMode = edgeMode;
 
-        // If the vehicle changes, print the PREVIOUS segment and reset!
         if (edgeMode != currentMode) {
             string modeName;
             if(currentMode == 1) modeName = "Car";
@@ -475,29 +419,22 @@ int main(){
             else if(currentMode == 3) modeName = "Bikolpo Bus";
             else if(currentMode == 4) modeName = "Uttara Bus";
 
-            string uName = idToStationName.count(segmentStartID) ? idToStationName[segmentStartID] : "(" + to_string(idToNode[segmentStartID].lon) + ", " + to_string(idToNode[segmentStartID].lat) + ")";
-            string vName = idToStationName.count(u) ? idToStationName[u] : "(" + to_string(idToNode[u].lon) + ", " + to_string(idToNode[u].lat) + ")";
+            cout << "Cost: ৳" << fixed << setprecision(2) << segmentCost << ": Ride " << modeName 
+                 << " from " << formatNode(segmentStartID) << " to " << formatNode(u) << ".\n";
 
-            cout << "Ride " << modeName << " from " << uName << " to " << vName 
-                 << ", Distance: " << fixed << setprecision(3) << segmentDistance 
-                 << " km, Cost: ৳" << fixed << setprecision(2) << segmentCost << "\n";
-
-            totalDistance += segmentDistance;
+            totalTripDistance += segmentDistance;
             calculatedTotalCost += segmentCost;
 
-            // Reset for the new vehicle
             currentMode = edgeMode;
             segmentStartID = u;
             segmentDistance = edgeDist;
             segmentCost = minEdgeCost;
         } else {
-            // Still on the same vehicle, keep adding up the distance and cost
             segmentDistance += edgeDist;
             segmentCost += minEdgeCost;
         }
     }
 
-    // Print the very last segment after the loop finishes
     string finalModeName;
     if(currentMode == 1) finalModeName = "Car";
     else if(currentMode == 2) finalModeName = "Metro";
@@ -505,34 +442,28 @@ int main(){
     else if(currentMode == 4) finalModeName = "Uttara Bus";
 
     int lastNode = shortestPath.back();
-    string startSegName = idToStationName.count(segmentStartID) ? idToStationName[segmentStartID] : "(" + to_string(idToNode[segmentStartID].lon) + ", " + to_string(idToNode[segmentStartID].lat) + ")";
-    string endSegName = idToStationName.count(lastNode) ? idToStationName[lastNode] : "(" + to_string(idToNode[lastNode].lon) + ", " + to_string(idToNode[lastNode].lat) + ")";
 
-    cout << "Ride " << finalModeName << " from " << startSegName << " to " << endSegName 
-         << ", Distance: " << fixed << setprecision(3) << segmentDistance 
-         << " km, Cost: ৳" << fixed << setprecision(2) << segmentCost << "\n";
+    cout << "Cost: ৳" << fixed << setprecision(2) << segmentCost << ": Ride " << finalModeName 
+         << " from " << formatNode(segmentStartID) << " to " << formatNode(lastNode) << ".\n";
 
-    totalDistance += segmentDistance;
+    totalTripDistance += segmentDistance;
     calculatedTotalCost += segmentCost;
 
-    // 3. Print Walk to End
     if (walkFromEnd > 1e-6) {
-        string endName = idToStationName.count(endID) ? idToStationName[endID] : "(" + to_string(idToNode[endID].lon) + ", " + to_string(idToNode[endID].lat) + ")";
-        cout << "Walk from " << endName << " to Destination, Distance: " 
-             << fixed << setprecision(3) << walkFromEnd << " km\n";
-        totalDistance += walkFromEnd;
+        cout << "Cost: ৳0.00: Walk from " << formatNode(endID) 
+             << " to Destination (" << fixed << setprecision(6) << destination.lon << ", " << destination.lat << ").\n";
+        totalTripDistance += walkFromEnd;
     }
 
-    // 4. Totals & KML
-    cout << "\nTotal Distance: " << fixed << setprecision(3) << totalDistance << " km\n";
+    cout << "\nTotal Distance: " << fixed << setprecision(3) << totalTripDistance << " km\n";
     cout << "Total Cost: ৳" << fixed << setprecision(2) << calculatedTotalCost << "\n";
 
-    cout << "\nCoordinates for KML:" << endl;
-    cout << fixed << setprecision(6) << source.lon << "," << source.lat << ",0" << endl;
+    cout << "\nCoordinates for KML:\n";
+    cout << fixed << setprecision(6) << source.lon << "," << source.lat << ",0\n";
     for (int id : shortestPath) {
-        cout << fixed << setprecision(6) << idToNode[id].lon << "," << idToNode[id].lat << ",0" << endl;
+        cout << fixed << setprecision(6) << idToNode[id].lon << "," << idToNode[id].lat << ",0\n";
     }
-    cout << fixed << setprecision(6) << destination.lon << "," << destination.lat << ",0" << endl;
+    cout << fixed << setprecision(6) << destination.lon << "," << destination.lat << ",0\n";
 
     return 0;
 }
