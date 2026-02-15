@@ -242,7 +242,8 @@ int getNearestNodeID(Node target){
 int main(){
 
     load_roadmap("Roadmap-Dhaka.csv");
-    cout<<"Total distinct intersections: "<<idToNode.size()<<endl;
+
+    // cout<<"Total distinct intersections: "<<idToNode.size()<<endl;
 
 
 
@@ -265,30 +266,47 @@ int main(){
 
 
 
-
     if(shortestPath.empty()){
-        cout << "No path found between these two points " << endl;
+        cout << "No path found between these two points." << endl;
     } 
     else{
+        cout << "\nProblem No: 1\n";
+        cout << "Source: (" << fixed << setprecision(6) << source.lon << ", " << source.lat << ")\n";
+        cout << "Destination: (" << fixed << setprecision(6) << destination.lon << ", " << destination.lat << ")\n\n";
 
-
-        cout << "Shortest path found with " << shortestPath.size() << " steps." << endl;
-        cout << "Coordinates for KML:" << endl;
-        cout << fixed << setprecision(6) << source.lon << "," << source.lat << ",0" << endl;
-        
-
-
-
-
-        //car route
-        for (int id : shortestPath) {
-            Node p = idToNode[id];
-            cout<<fixed<<setprecision(6)<<p.lon<<","<<p.lat <<",0"<<endl;
+        if (walkToStart > 1e-6) {
+            cout << "Cost: ৳0.00: Walk from Source (" << source.lon << ", " << source.lat 
+                 << ") to (" << idToNode[startID].lon << ", " << idToNode[startID].lat << ").\n";
         }
 
-        //exact end point (Walking)
-        cout<<fixed<<setprecision(6)<<destination.lon<<","<< destination.lat << ",0" << endl;
-        cout<<"Walking to destination: " <<walkFromEnd<<" km"<<endl;
+        double totalDrivingDistance = 0.0;
+        for (int i = 0; i < shortestPath.size() - 1; i++) {
+            int u = shortestPath[i];
+            int v = shortestPath[i+1];
+            totalDrivingDistance += haversine(idToNode[u], idToNode[v]);
+        }
+        
+
+        int firstCarNode = shortestPath.front();
+        int lastCarNode = shortestPath.back();
+        
+        cout << "Shortest Distance : "<<fixed<<setprecision(6)<<totalDrivingDistance<< "km : Ride Car from (" 
+             <<idToNode[firstCarNode].lon<< ", " <<idToNode[firstCarNode].lat << ") to (" 
+             <<idToNode[lastCarNode].lon<< ", " <<idToNode[lastCarNode].lat << ").\n";
+
+        if (walkFromEnd > 1e-6) {
+            cout << "Cost: ৳0.00: Walk from (" << idToNode[endID].lon << ", " << idToNode[endID].lat 
+                 << ") to Destination (" << destination.lon << ", " << destination.lat << ").\n";
+        }
+
+        //Print the KML Coordinates
+        // cout << "\nCoordinates for KML:" << endl;
+        // cout << fixed << setprecision(6) << source.lon << "," << source.lat << ",0" << endl;
+        // for (int id : shortestPath) {
+        //     Node p = idToNode[id];
+        //     cout << fixed << setprecision(6) << p.lon << "," << p.lat << ",0" << endl;
+        // }
+        cout << fixed << setprecision(6) << destination.lon << "," << destination.lat << ",0" << endl;
     }
 
     return 0;
