@@ -238,11 +238,7 @@ void load_roadmap(string filename){
 }
 
 
-
-
-
 void loadTransit(string filename, int modeID){
-
 
     ifstream file(filename);
     if(!file.is_open()){
@@ -263,21 +259,17 @@ void loadTransit(string filename, int modeID){
         string token;
         vector<string>tokens;
 
-
-
-        
-        
-        
-        
-        
         while(getline(ss,token,',')){
             tokens.push_back(token);
         }
+        
         if(tokens.size() < 5){
             continue;
         }
+        
         string startStationName = tokens[tokens.size() - 2];
         string endStationName = tokens[tokens.size() - 1];
+        
         vector<Node>roadPoints;
         for(int i=1;i<tokens.size()-2;i+=2){
             double lon = stod(tokens[i]);
@@ -288,48 +280,25 @@ void loadTransit(string filename, int modeID){
         if (roadPoints.empty()){
             continue;
         }
-        //the first co-ordinate of each line is the
-            //location of the source metro
-        //the last co-ordinate of the roadPoints vector is the
-            //location of the destination metro
+        
+        // The first coordinate is the source station
+        // The last coordinate is the destination station
         int firstNodeID = getID(roadPoints.front());
         int lastNodeID = getID(roadPoints.back());
-        idToStationName[firstNodeID]=startStationName;
-        idToStationName[lastNodeID]=endStationName;
+        idToStationName[firstNodeID] = startStationName;
+        idToStationName[lastNodeID] = endStationName;
       
-      
-
-
-
-
-
-
-
-
+        // Calculate total distance from first to last station through all waypoints
+        double totalDistance = 0.0;
         for(int k=0; k<roadPoints.size()-1; k++){
-            Node u = roadPoints[k];
-            Node v = roadPoints[k+1];
-
-            int uID = getID(u);
-            int vID = getID(v);
-            double w = haversine(u,v);
-
-            graph[uID].push_back({vID,w,modeID});
-            graph[vID].push_back({uID,w,modeID});
+            totalDistance += haversine(roadPoints[k], roadPoints[k+1]);
         }
-    
-    
-    
-    
+
+        // Add a single edge from first to last station with accumulated distance
+        // Transit routes are unidirectional (one-way only)
+        graph[firstNodeID].push_back({lastNodeID, totalDistance, modeID});
     }
-
-
-
 }
-
-
-
-
 
 
 int getNearestNodeID(Node target){
@@ -356,6 +325,23 @@ int getNearestNodeID(Node target){
 
 
 
+string formatNode(int id){
+    stringstream ss; 
+    ss << fixed << setprecision(6); 
+    
+    if(idToStationName.count(id)){ 
+        ss << idToStationName[id] << " ";
+    }
+    
+    ss << "(" << idToNode[id].lon << ", " << idToNode[id].lat << ")";
+    
+    return ss.str(); 
+}
+
+
+
+
+
 
 int main(){
 
@@ -366,7 +352,7 @@ int main(){
    
    
     
-    cout<<"Total distinct intersections: "<<idToNode.size()<<endl;
+    // cout<<"Total distinct intersections: "<<idToNode.size()<<endl;
 
 
 
