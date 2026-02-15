@@ -1,0 +1,15 @@
+
+Problem No: 3
+Source: (90.400229, 23.875956)
+Destination: (90.367982, 23.835966)
+
+Cost: ৳19.01: Ride Car from (90.400229, 23.875956) to Azampur (90.400331, 23.867923).
+Cost: ৳2.85: Ride Uttara Bus from Azampur (90.400331, 23.867923) to Jashim Uddin (90.400302, 23.864429).
+Cost: ৳91.71: Ride Car from Jashim Uddin (90.400302, 23.864429) to Khilkhet (90.419952, 23.828786).
+Cost: ৳44.79: Ride Uttara Bus from Khilkhet (90.419952, 23.828786) to Jahangir Gate (90.398782, 23.781108).
+Cost: ৳195.00: Ride Car from Jahangir Gate (90.398782, 23.781108) to (90.367982, 23.835966).
+
+Total Distance: 22.092 km
+Total Cost: ৳353.37
+
+Route saved to route3.kml

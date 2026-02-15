@@ -1,0 +1,12 @@
+
+Problem No: 2
+Source: (90.363833, 23.834145)
+Destination: (90.378356, 23.756928)
+
+Cost: ৳46.75: Ride Metro from Cantonment (90.363833, 23.834145) to Firmgate (90.389841, 23.759079).
+Cost: ৳27.67: Ride Car from Firmgate (90.389841, 23.759079) to (90.378356, 23.756928).
+
+Total Distance: 10.734 km
+Total Cost: ৳74.42
+
+Route saved to route2.kml

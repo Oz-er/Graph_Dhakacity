@@ -1,0 +1,14 @@
+
+Problem No: 5
+Source: (90.400229, 23.875956)
+Destination: (90.367982, 23.835966)
+Starting time at source: 5:43 PM
+
+5:43 PM - 7:55 PM, Cost: ৳440.98: Ride Car from (90.400229, 23.875956) to (90.367982, 23.835966).
+
+Total Distance: 22.049 km
+Total Time: 132.29 minutes
+Total Cost: ৳440.98
+Arrival Time: 7:55 PM
+
+Route saved to route5.kml
